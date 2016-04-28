@@ -1,10 +1,14 @@
 {
-  "name": "package-file-handler",
+  "name": "package-require-handler",
   "version": "0.0.1",
   "description": "This plugin will handle the package project file require analysis, give the entry and return all the files it require, include third modules. Support css, js, mustache, string types",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sdwangbaotong/package-require-handler.git"
   },
   "keywords": [
     "package",
@@ -14,5 +18,9 @@
   "license": "MIT",
   "dependencies": {
     "md5": "^2.1.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/sdwangbaotong/package-require-handler/issues"
+  },
+  "homepage": "https://github.com/sdwangbaotong/package-require-handler"
 }

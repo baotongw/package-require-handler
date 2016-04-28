@@ -26,33 +26,4 @@ var handler = {
     }
 }
 
-var root = 'D:\\Tools\\qzz\\webpack-tools';
-var config = {
-    alias: {
-        "lib": "src/scripts/lib",
-        "base": "src/scripts/lib/common",
-        "plugins": "src/scripts/lib/ui",
-        "page": "src/scripts/page/",
-        "app": "src/scripts/app/",
-        "easyui": "src/scripts/lib/ui/easyui/components",
-        "easycss": "src/styles/zhuanti/easyui",
-        "basecss": "src/styles/base",
-        "pluginscss": "src/styles/ui",
-        "themecss": "src/styles/theme",
-        "commoncss": "src/styles/common",
-        "styleRoot": "src/styles/",
-        "scriptRoot": "src/scripts/",
-        "QChat": "fekit_modules/qchat/src",
-        "outbroundcss": "src/styles/outbround"
-    },
-    modulesDirectories: ['node_modules', 'fekit_modules'],
-    extensions: ['', '.js', '.webpack.js', '.jsx', '.css', '.web.js', '.mustache', '.string']
-}
-
-var testPath = 'scripts/app/theme_trip/theme/hub.js';
-//testPath = 'styles/theme/page/theme/index.css';
-
-handler.setOptions(config, root);
-handler.getFileRequireList(testPath);
-
 module.exports = handler;

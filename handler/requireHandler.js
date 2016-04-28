@@ -189,12 +189,4 @@ RequireHandler.prototype.getRequireList = function (filePath, parentPath, requir
     return requireList;
 }
 
-RequireHandler.prototype.configDataPrefix = function (configData) {
-    
-}
-
-RequireHandler.prototype.isCss = function (params) {
-
-}
-
 module.exports = RequireHandler;

@@ -1,13 +1,12 @@
 #package-file-handler
 
 ##简介##
-这是一个用来处理fekit工程中文件引用关系的插件，可以基于该插件做一些和文件引用相关的开发工作，目前只支持到基于commonJS的代码分析。
-
-通过对外接口提供一个文件的export，方法会返回该文件所require进来的所有文件。
-
+这是一个用来处理fekit工程中文件引用关系的插件，通过对外接口提供一个文件的export，方法会返回该文件所require进来的所有文件。
+可以基于该插件做一些和文件引用相关的开发工作，目前只支持到基于commonJS的代码分析。
 同时支持fekit_module和标准的node_module模块获取
-
 目前支持js,css,string,mustache等后缀的文件。
+
+使用时需要本地有对应的工程代码，目前适合内部team使用。如果需要其他扩展可联系我
 
 ##使用方法##
     npm install package-require-handler 或者 cnpm install package-require-handler
