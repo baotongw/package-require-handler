@@ -1,12 +1,12 @@
 var handler = {
     initConfig: function (config) {
-        var config = {
+        var fixedConfig = {
             alias: config.alias || {},
             modulesDirectories: config.modulesDirectories || {},
             extensions: config.extensions || {}
         }
 
-        return config;
+        return fixedConfig;
     }
 }
 

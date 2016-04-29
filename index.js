@@ -21,7 +21,7 @@ var handler = {
             console.log('传入的文件地址解析失败：' + filePath);
             console.log('error message: ' + err.message);
         }
-        console.log(list)
+
         return list;
     }
 }

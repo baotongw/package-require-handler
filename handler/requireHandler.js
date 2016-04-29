@@ -8,9 +8,7 @@ var filesys = require('fs'),
 function RequireHandler(rootFolder, config) {
     this.rootFolder = rootFolder;
     this.config = config;
-    this.moduleHandler = new ModuleHandler(rootFolder, this.config);    
-    
-    this.pathTmpl = pathsys.join(rootFolder, 'src', '{0}');
+    this.moduleHandler = new ModuleHandler(rootFolder, this.config);
     
     this.patterns = {
         // 匹配完整的一样require
@@ -77,7 +75,8 @@ RequireHandler.prototype.checkPrefix = function (filePath, parentPath) {
         if(parentPath) {
             targetPath = pathsys.join(parentPath, filePath);    
         } else {
-            targetPath = this.pathTmpl.format(filePath);   
+            // 插件自动取当前目录的src文件夹作为默认代码文件夹
+            targetPath = pathsys.join(this.rootFolder, 'src', filePath);   
         }
     }
 
