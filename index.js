@@ -23,6 +23,21 @@ var handler = {
         }
 
         return list;
+    },
+    readFile: function(filePath) {
+        return this.requireHandler.readFile(filePath);
+    },
+    getPatterns: function() {
+        return this.requireHandler.patterns;
+    },
+    checkModuleOrLocalFile: function(filePath, parentPath) {
+        return this.requireHandler.checkModuleOrLocalFile(filePath, parentPath);
+    },
+    checkPrefix: function(filePath, parentPath) {
+        return this.requireHandler.checkPrefix(filePath, parentPath);
+    },
+    checkExtensionName: function(filePath) {
+        return this.requireHandler.checkExtensionName(filePath);
     }
 }
 
