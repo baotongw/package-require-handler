@@ -11,20 +11,23 @@ function RequireHandler(rootFolder, config) {
     this.moduleHandler = new ModuleHandler(rootFolder, this.config);
     
     this.patterns = {
-        // 匹配完整的一样require
-        requireRowPattern: /.*?require\(\s*?['|"].*?['|"]\s*?\)/g,
+        // 匹配完整的一行require
+        requireRowPattern: /.*?(?:require|@import\surl)\(\s*?['|"].*?['|"]\s*?\)/g,
         // 替换掉<require('filepath');>这一部分
-        requireReplacePattern: /(require\(\s*?['|"].*?['|"]\s*?\))/igm,
-        // 查找文件中是否存在require 
+        requireReplacePattern: /((?:require|@import\surl)\(\s*?['|"].*?['|"]\s*?\))/igm,
+        // 查找文件中是否存在require or css import
         requirePattern: /(?:require|@import\surl)\(['|"](.*?)['|"]\);*/igm, // /require\(\s*?['|"].*?['|"]\s*?\)/igm,
         // 匹配具体的引用路径
-        pathPattern: /require\(\s*?['|"](.*?)['|"]\s*?\)/ig,
+        pathPattern: /(?:require|@import\surl)\(\s*?['|"](.*?)['|"]\s*?\)/ig,
         // 匹配第一个单词，然后和alias配置匹配，如果有就替换为alias对应的完整路径
         aliasPattern: /(.+?)(?:\/|\\)/,
         // 匹配当前是否是一个单词，如果是则认为是一个module，亦或者是fekit支持的本地文件的一种
         // 后缀可能是css、js、string、mustache等
         modulePattern: /^[\w-_]+$/,
-        commentPattern: /[\/\/.+/|\/\*[.|\s]+\*\/\/]/m
+        commentPattern: /[\/\/.+/|\/\*[.|\s]+\*\/\/]/m,
+        // 干掉注释
+        removeSingleComment: /(^|\n|\r)\s*?\/\/.*/g,
+        removeMultipleComment: /\/\*[\s\S]*?\*\//g
     }
 }
 
@@ -45,6 +48,9 @@ RequireHandler.prototype.readFile = function (filePath) {
         activePath = filePath;
         result = filesys.readFileSync(filePath, 'utf-8');
     }
+
+    // 干掉代码中的注释防止其对require的解析出现干扰
+    result = result.replace(this.patterns.removeSingleComment, '').replace(this.patterns.removeMultipleComment, '');
 
     return {
         path: activePath,
@@ -103,14 +109,14 @@ RequireHandler.prototype.checkExtensionName = function (filePath) {
     return filePath;
 }
 
-RequireHandler.prototype.checkModuleOrLocalFile = function (filePath, parentPath) {
+RequireHandler.prototype.checkModuleOrLocalFile = function (filePath, parentPath, isParentModule) {
     var targetPath;
 
     // 先检查是否是本地文件的相对路径引用
     targetPath = pathsys.join(parentPath || '', filePath);
     if (filesys.existsSync(targetPath)) {
         return {
-            isModule: false,
+            isModule: isParentModule || false,
             targetPath: targetPath
         }
     }
@@ -123,8 +129,8 @@ RequireHandler.prototype.checkModuleOrLocalFile = function (filePath, parentPath
     }
 }
 
-RequireHandler.prototype.getRequireList = function (filePath, parentPath, requireList) {
-    var isModule = false,
+RequireHandler.prototype.getRequireList = function (filePath, parentPath, requireList, isParentModule) {
+    var isModule = isParentModule || false,
         moduleContent,
         requireList = requireList || [];
         
@@ -132,15 +138,15 @@ RequireHandler.prototype.getRequireList = function (filePath, parentPath, requir
         this.handled = {};
     }
 
-    if (this.patterns.modulePattern.test(filePath)) {
-        moduleContent = this.checkModuleOrLocalFile(filePath, parentPath);
+    if (isModule || (!isModule && this.patterns.modulePattern.test(filePath))) {
+        moduleContent = this.checkModuleOrLocalFile(filePath, parentPath, isParentModule);
         filePath = moduleContent.targetPath;
         isModule = moduleContent.isModule;
     } else {
         filePath = this.checkPrefix(filePath, parentPath);
         filePath = this.checkExtensionName(filePath);
     }
-
+    
     var encyptPath = md5(filePath);
 
     var fileContent = this.readFile(filePath),
@@ -159,7 +165,7 @@ RequireHandler.prototype.getRequireList = function (filePath, parentPath, requir
         filePath: filePath,
         key: encyptPath,
         isModule: isModule
-    }    
+    }
 
     if (!fileContent.content) {
         requireList.push({
@@ -174,7 +180,7 @@ RequireHandler.prototype.getRequireList = function (filePath, parentPath, requir
 
     if (!imports) {
         requireList.push(obj);
-        return requireList;
+        return;
     }
 
     // 分析文件里的递归require
@@ -182,8 +188,11 @@ RequireHandler.prototype.getRequireList = function (filePath, parentPath, requir
         imports[i].match(this.patterns.pathPattern);
 
         tempPath = RegExp.$1;
-        this.getRequireList(tempPath, subParent, requireList);
+        this.getRequireList(tempPath, subParent, requireList, isModule);
     }
+
+    // 分析完require的文件之后 把自身加上
+    requireList.push(obj);
     
     return requireList;
 }
