@@ -1,6 +1,6 @@
 {
   "name": "package-require-handler",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "This plugin will handle the package project file require analysis, give the entry and return all the files it require, include third modules. Support css, js, mustache, string types",
   "main": "index.js",
   "scripts": {

@@ -114,6 +114,8 @@ RequireHandler.prototype.checkModuleOrLocalFile = function (filePath, parentPath
 
     // 先检查是否是本地文件的相对路径引用
     targetPath = pathsys.join(parentPath || '', filePath);
+    targetPath = this.checkExtensionName(targetPath);
+
     if (filesys.existsSync(targetPath)) {
         return {
             isModule: isParentModule || false,
@@ -122,6 +124,7 @@ RequireHandler.prototype.checkModuleOrLocalFile = function (filePath, parentPath
     }
 
     targetPath = this.moduleHandler.getIndexPath(filePath);
+    targetPath = this.checkExtensionName(targetPath);
 
     return {
         isModule: true,
