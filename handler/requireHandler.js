@@ -9,7 +9,8 @@ function RequireHandler(rootFolder, config) {
     this.rootFolder = rootFolder;
     this.config = config;
     this.moduleHandler = new ModuleHandler(rootFolder, this.config);
-    
+    this.cssExts = ['.css', '.scss', '.less'];
+
     this.patterns = {
         // 匹配完整的一行require
         requireRowPattern: /.*?(?:require|@import\surl)\(\s*?['|"].*?['|"]\s*?\)/g,
@@ -78,11 +79,11 @@ RequireHandler.prototype.checkPrefix = function (filePath, parentPath) {
         targetPath = pathsys.join(this.rootFolder, targetPath);
     } else {
         //相对于父文件的相对路径
-        if(parentPath) {
-            targetPath = pathsys.join(parentPath, filePath);    
+        if (parentPath) {
+            targetPath = pathsys.join(parentPath, filePath);
         } else {
             // 插件自动取当前目录的src文件夹作为默认代码文件夹
-            targetPath = pathsys.join(this.rootFolder, 'src', filePath);   
+            targetPath = pathsys.join(this.rootFolder, 'src', filePath);
         }
     }
 
@@ -90,14 +91,19 @@ RequireHandler.prototype.checkPrefix = function (filePath, parentPath) {
 }
 
 // 如果文件地址中没有后缀名，则尝试和系统支持的后缀名逐个匹配，直到找到第一个匹配的为止
-RequireHandler.prototype.checkExtensionName = function (filePath) {
+RequireHandler.prototype.checkExtensionName = function (filePath, isCss) {
     var types = this.config.extensions || [],
         fileExist,
         possiblePath,
         i;
 
-    if (pathsys.extname(filePath) === '') {
+    if (pathsys.extname(filePath) === '' || filesys.existsSync(possiblePath) === false) {
         for (i = 0; i < types.length; i++) {
+            // 不是css的请求跳过对css后缀名的检测
+            if (!isCss && this.cssExts.indexOf(types[i]) > -1) {
+                continue;
+            }
+
             possiblePath = filePath + types[i];
 
             if (filesys.existsSync(possiblePath)) {
@@ -109,58 +115,61 @@ RequireHandler.prototype.checkExtensionName = function (filePath) {
     return filePath;
 }
 
-RequireHandler.prototype.checkModuleOrLocalFile = function (filePath, parentPath, isParentModule) {
+RequireHandler.prototype.checkModuleOrLocalFile = function (filePath, parentPath, isParentModule, isCss) {
     var targetPath;
 
-    // 先检查是否是本地文件的相对路径引用
-    targetPath = pathsys.join(parentPath || '', filePath);
-    targetPath = this.checkExtensionName(targetPath);
+    // 优先检查是否是module文件
+    targetPath = this.moduleHandler.getIndexPath(filePath);
+    targetPath = this.checkExtensionName(targetPath, isCss);
 
     if (filesys.existsSync(targetPath)) {
         return {
-            isModule: isParentModule || false,
+            isModule: true,
             targetPath: targetPath
         }
     }
 
-    targetPath = this.moduleHandler.getIndexPath(filePath);
-    targetPath = this.checkExtensionName(targetPath);
+    // 检查是否是本地文件的相对路径引用
+    targetPath = pathsys.join(parentPath || '', filePath);
+    targetPath = this.checkExtensionName(targetPath, isCss);
 
     return {
-        isModule: true,
+        isModule: isParentModule || false,
         targetPath: targetPath
     }
+
+
 }
 
-RequireHandler.prototype.getRequireList = function (filePath, parentPath, requireList, isParentModule) {
+RequireHandler.prototype.getRequireList = function (filePath, isCss, parentPath, requireList, isParentModule) {
     var isModule = isParentModule || false,
         moduleContent,
         requireList = requireList || [];
-        
-    if(!parentPath) {
+
+    if (!parentPath) {
         this.handled = {};
     }
 
     if (isModule || (!isModule && this.patterns.modulePattern.test(filePath))) {
-        moduleContent = this.checkModuleOrLocalFile(filePath, parentPath, isParentModule);
+        moduleContent = this.checkModuleOrLocalFile(filePath, parentPath, isParentModule, isCss);
         filePath = moduleContent.targetPath;
         isModule = moduleContent.isModule;
     } else {
         filePath = this.checkPrefix(filePath, parentPath);
-        filePath = this.checkExtensionName(filePath);
+        filePath = this.checkExtensionName(filePath, isCss);
     }
-    
+
     var encyptPath = md5(filePath);
 
     var fileContent = this.readFile(filePath),
         subParent = pathsys.dirname(filePath),
         returnFilePath = null;
-    
+
     // 重复引用的，直接返回
     if (this.handled[filePath]) {
         return null;
     }
-    
+
     // 第一次引入的做一个标记
     this.handled[filePath] = 1;
 
@@ -175,7 +184,7 @@ RequireHandler.prototype.getRequireList = function (filePath, parentPath, requir
             filePath: filePath,
             error: 'file not found'
         });
-        
+
         return requireList;
     }
 
@@ -187,16 +196,17 @@ RequireHandler.prototype.getRequireList = function (filePath, parentPath, requir
     }
 
     // 分析文件里的递归require
-    for (var i = 0, item, subFile = null, tempPath = null; i < imports.length; i++) {
+    for (var i = 0, item, subFile = null, tempPath = null, ext = null; i < imports.length; i++) {
+
         imports[i].match(this.patterns.pathPattern);
 
         tempPath = RegExp.$1;
-        this.getRequireList(tempPath, subParent, requireList, isModule);
+        this.getRequireList(tempPath, isCss, subParent, requireList, isModule);
     }
 
     // 分析完require的文件之后 把自身加上
     requireList.push(obj);
-    
+
     return requireList;
 }
 

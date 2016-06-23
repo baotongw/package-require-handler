@@ -8,7 +8,7 @@ var handler = {
         
         this.requireHandler = new RequireHandler(rootFolder, this.config);
     },
-    getFileRequireList: function (filePath) {
+    getFileRequireList: function (filePath, isCss) {
         if(!this.config) {
             throw new Error('未指定组件config，参考组件说明');
         }
@@ -16,7 +16,7 @@ var handler = {
         var list;
         
         try{
-            list = this.requireHandler.getRequireList(filePath);
+            list = this.requireHandler.getRequireList(filePath, isCss);
         } catch(err) {
             console.log('传入的文件地址解析失败：' + filePath);
             console.log('error message: ' + err.message);
